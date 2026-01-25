@@ -1,0 +1,3 @@
+"0",""
+"0","# Show cluster assignments"
+"0","head(patterns$df)"

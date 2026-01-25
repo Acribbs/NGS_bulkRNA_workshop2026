@@ -1,0 +1,53 @@
+"0","# Method 1: Using contrast with interaction terms"
+"0","# This compares: (luminal, lactate) vs (luminal, virgin)"
+"0","# We need to check the actual coefficient names first"
+"0","cat(""Available coefficients:\n"")"
+"1","Available coefficients:
+"
+"0","print(resultsNames(dds_wald))"
+"1","[1]"
+"1"," ""Intercept""                "
+"1"," ""CellType_luminal_vs_basal"""
+"1"," ""Status_pregnant_vs_virgin"""
+"1"," ""Status_lactate_vs_virgin"" "
+"1","
+"
+"0","# Lactate vs. Virgin (main effect)"
+"0","# Note: This shows the main effect of Status, which applies to the reference cell type (basal)"
+"0","# For cell-type-specific comparisons with interactions, you would need to use the full interaction model"
+"0","res_luminal_lactate_virgin <- results(dds_wald,"
+"0","                                       contrast = c(""Status"", ""lactate"", ""virgin""))"
+"0",""
+"0","# For cell-type-specific comparison, we can also use:"
+"0","# Note: This is a simplified approach - for exact cell-type-specific contrasts,"
+"0","# you may need to use the interaction model or manually construct contrasts"
+"0","# For now, we show the main effect which applies to the reference cell type (basal)"
+"0",""
+"0","# Summary"
+"0","summary(res_luminal_lactate_virgin, alpha = 0.05)"
+"1","
+"
+"1","out of 17053 with nonzero total read count
+"
+"1","adjusted p-value < 0.05
+"
+"1","LFC > 0 (up)       : 3087, 18%
+"
+"1","LFC < 0 (down)     : 2994, 18%
+"
+"1","outliers [1]       : 0, 0%
+"
+"1","low counts [2]     : 662, 3.9%
+"
+"1","(mean count < 1)
+"
+"1","[1] see 'cooksCutoff' argument of ?results
+"
+"1","[2] see 'independentFiltering' argument of ?results
+"
+"1","
+"
+"0","# MA plot"
+"0","DESeq2::plotMA(res_luminal_lactate_virgin, "
+"0","               ylim = c(-3, 3),"
+"0","               main = ""MA Plot: Lactate vs. Virgin (Main Effect)"")"

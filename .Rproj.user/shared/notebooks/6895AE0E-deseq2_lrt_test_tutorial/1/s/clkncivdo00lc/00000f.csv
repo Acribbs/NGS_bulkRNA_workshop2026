@@ -1,0 +1,10 @@
+"0","# Create DESeqDataSet with full model including interaction"
+"0","dds <- DESeqDataSetFromMatrix("
+"0","  countData = count_matrix,"
+"0","  colData = metadata,"
+"0","  design = ~ CellType + Status + CellType:Status"
+"0",")"
+"2","Error in SummarizedExperiment(assays = SimpleList(counts = countData),  : 
+  the rownames and colnames of the supplied assay(s) must be NULL or identical to those of the SummarizedExperiment object (or derivative) to
+  construct
+"

@@ -1,0 +1,45 @@
+"0","# Create new DDS for main effect test"
+"0","# Use the same properly formatted metadata"
+"0","metadata_df_status <- as.data.frame(metadata)"
+"0","rownames(metadata_df_status) <- colnames(count_matrix)"
+"0",""
+"0","dds_status <- DESeqDataSetFromMatrix("
+"0","  countData = count_matrix,"
+"0","  colData = metadata_df_status,"
+"0","  design = ~ CellType + Status"
+"0",")"
+"0",""
+"0","# Pre-filter"
+"0","keep <- rowSums(counts(dds_status)) >= 10"
+"0","dds_status <- dds_status[keep, ]"
+"0",""
+"0","# Run LRT for main effect of Status"
+"0","dds_lrt_status <- DESeq(dds_status, test = ""LRT"", reduced = ~ CellType)"
+"0",""
+"0","# Extract results"
+"0","res_status <- results(dds_lrt_status)"
+"0",""
+"0","# Summary"
+"0","summary(res_status, alpha = 0.05)"
+"1","
+"
+"1","out of 17053 with nonzero total read count
+"
+"1","adjusted p-value < 0.05
+"
+"1","LFC > 0 (up)       : 3443, 20%
+"
+"1","LFC < 0 (down)     : 3532, 21%
+"
+"1","outliers [1]       : 0, 0%
+"
+"1","low counts [2]     : 331, 1.9%
+"
+"1","(mean count < 1)
+"
+"1","[1] see 'cooksCutoff' argument of ?results
+"
+"1","[2] see 'independentFiltering' argument of ?results
+"
+"1","
+"

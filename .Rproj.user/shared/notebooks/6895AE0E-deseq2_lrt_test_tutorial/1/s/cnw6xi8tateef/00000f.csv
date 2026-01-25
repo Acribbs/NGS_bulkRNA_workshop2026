@@ -1,0 +1,30 @@
+"0","# Run LRT for interaction"
+"0","dds_lrt_interaction <- DESeq(dds, test = ""LRT"", reduced = ~ CellType + Status)"
+"0",""
+"0","# Extract results"
+"0","res_interaction <- results(dds_lrt_interaction)"
+"0",""
+"0","# Summary"
+"0","summary(res_interaction, alpha = 0.05)"
+"1","
+"
+"1","out of 17053 with nonzero total read count
+"
+"1","adjusted p-value < 0.05
+"
+"1","LFC > 0 (up)       : 4280, 25%
+"
+"1","LFC < 0 (down)     : 4359, 26%
+"
+"1","outliers [1]       : 0, 0%
+"
+"1","low counts [2]     : 992, 5.8%
+"
+"1","(mean count < 2)
+"
+"1","[1] see 'cooksCutoff' argument of ?results
+"
+"1","[2] see 'independentFiltering' argument of ?results
+"
+"1","
+"

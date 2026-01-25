@@ -1,0 +1,17 @@
+"0",""
+"0","# Run degPatterns"
+"0","# Note: degPatterns expects:"
+"0","# - pattern_data: long format with genes, samplename, value, and metadata columns"
+"0","# - metadata: separate data frame with one row per sample"
+"0","patterns <- degPatterns(pattern_data, "
+"0","                        metadata = metadata_patterns,"
+"0","                        time = ""Status"","
+"0","                        col = ""CellType"","
+"0","                        minc = 5,"
+"0","                        reduce = TRUE,"
+"0","                        plot = TRUE)"
+"1","[1m[33mError[39m in `ma[, row.names(metadata)]`:[22m
+[33m![39m Can't subset columns that don't exist.
+[31m✖[39m Columns `1`, `2`, `3`, `4`, `5`, etc. don't exist.
+[90mRun `]8;;x-r-run:rlang::last_trace()rlang::last_trace()]8;;` to see where the error occurred.[39m
+"

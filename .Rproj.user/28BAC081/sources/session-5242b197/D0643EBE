@@ -3,7 +3,7 @@
     "path": "~/Dropbox/Mac (3)/Documents/01_Personal/Academic/presentations/NGS_bulkRNA_workshop2026/deseq2_wald_test_tutorial.Rmd",
     "project_path": "deseq2_wald_test_tutorial.Rmd",
     "type": "r_markdown",
-    "hash": "3967205654",
+    "hash": "0",
     "contents": "",
     "dirty": false,
     "created": 1769333123689.0,
@@ -13,15 +13,15 @@
         "source_window_id": "",
         "Source": "Source",
         "cursorPosition": "24,2",
-        "scrollLine": "19",
+        "scrollLine": "0",
         "last_setup_crc32": "5242b197c9d629ba"
     },
     "folds": "",
-    "lastKnownWriteTime": 1769333167,
+    "lastKnownWriteTime": 1769334123,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1769333172586,
+    "last_content_update": 1769334123204,
     "read_only": false,
     "read_only_alternatives": []
 }

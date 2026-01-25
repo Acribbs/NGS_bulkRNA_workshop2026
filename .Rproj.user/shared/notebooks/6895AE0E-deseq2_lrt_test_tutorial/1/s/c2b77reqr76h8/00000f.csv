@@ -1,0 +1,32 @@
+"0","# Lactate vs. Pregnant"
+"0","res_lactate_pregnant <- results(dds_wald,"
+"0","                                 contrast = c(""Status"", ""lactate"", ""pregnant""))"
+"0",""
+"0","# Summary"
+"0","summary(res_lactate_pregnant, alpha = 0.05)"
+"1","
+"
+"1","out of 17053 with nonzero total read count
+"
+"1","adjusted p-value < 0.05
+"
+"1","LFC > 0 (up)       : 1781, 10%
+"
+"1","LFC < 0 (down)     : 1768, 10%
+"
+"1","outliers [1]       : 0, 0%
+"
+"1","low counts [2]     : 992, 5.8%
+"
+"1","(mean count < 2)
+"
+"1","[1] see 'cooksCutoff' argument of ?results
+"
+"1","[2] see 'independentFiltering' argument of ?results
+"
+"1","
+"
+"0","# MA plot"
+"0","DESeq2::plotMA(res_lactate_pregnant,"
+"0","               ylim = c(-3, 3),"
+"0","               main = ""MA Plot: Lactate vs. Pregnant (Main Effect)"")"

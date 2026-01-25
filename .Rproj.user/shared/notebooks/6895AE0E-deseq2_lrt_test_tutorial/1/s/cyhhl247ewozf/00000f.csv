@@ -1,0 +1,17 @@
+"0","# Find genes that are highly expressed in lactation"
+"0","# (This would require examining the actual expression values)"
+"0","cat(""Lactation-specific genes are expected to include:\n"")"
+"1","Lactation-specific genes are expected to include:
+"
+"0","cat(""- Milk protein genes (caseins, whey proteins)\n"")"
+"1","- Milk protein genes (caseins, whey proteins)
+"
+"0","cat(""- Lipid synthesis enzymes\n"")"
+"1","- Lipid synthesis enzymes
+"
+"0","cat(""- Transport proteins for milk components\n"")"
+"1","- Transport proteins for milk components
+"
+"0","cat(""- Genes involved in secretory pathways\n"")"
+"1","- Genes involved in secretory pathways
+"

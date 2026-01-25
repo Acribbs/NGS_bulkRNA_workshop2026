@@ -1,0 +1,24 @@
+"0","# Method 1: Using contrast with interaction terms"
+"0","# This compares: (luminal, lactate) vs (luminal, virgin)"
+"0","# We need to check the actual coefficient names first"
+"0","cat(""Available coefficients:\n"")"
+"1","Available coefficients:
+"
+"0","print(resultsNames(dds_wald))"
+"1","[1]"
+"1"," ""Intercept""                "
+"1"," ""CellType_luminal_vs_basal"""
+"1"," ""Status_pregnant_vs_virgin"""
+"1"," ""Status_lactate_vs_virgin"" "
+"1","
+"
+"0","# Lactate vs. Virgin in Luminal cells"
+"0","# This requires combining: Status_lactate_vs_virgin + CellTypeluminal:Statuslactate"
+"0","# The exact names depend on DESeq2's naming convention"
+"0","res_luminal_lactate_virgin <- results(dds_wald,"
+"0","                                       contrast = c(""Status"", ""lactate"", ""virgin""),"
+"0","                                       addMLE = TRUE)"
+"2","Error in results(dds_wald, contrast = c(""Status"", ""lactate"", ""virgin""),  : 
+  addMLE=TRUE is only for when a beta prior was used.
+otherwise, the log2 fold changes are already MLE
+"

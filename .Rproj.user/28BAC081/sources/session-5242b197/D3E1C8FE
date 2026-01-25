@@ -3,7 +3,7 @@
     "path": "~/Dropbox/Mac (3)/Documents/01_Personal/Academic/presentations/NGS_bulkRNA_workshop2026/deseq2_lrt_test_tutorial.Rmd",
     "project_path": "deseq2_lrt_test_tutorial.Rmd",
     "type": "r_markdown",
-    "hash": "0",
+    "hash": "2055801573",
     "contents": "",
     "dirty": false,
     "created": 1769333289984.0,
@@ -12,16 +12,16 @@
     "properties": {
         "source_window_id": "",
         "Source": "Source",
-        "cursorPosition": "23,1",
-        "scrollLine": "142",
+        "cursorPosition": "738,36",
+        "scrollLine": "1125",
         "last_setup_crc32": "5242b1979ae8f357"
     },
     "folds": "",
-    "lastKnownWriteTime": 1769334058,
+    "lastKnownWriteTime": 1769334836,
     "encoding": "UTF-8",
     "collab_server": "",
     "source_window": "",
-    "last_content_update": 1769334058,
+    "last_content_update": 1769338120035,
     "read_only": false,
     "read_only_alternatives": []
 }

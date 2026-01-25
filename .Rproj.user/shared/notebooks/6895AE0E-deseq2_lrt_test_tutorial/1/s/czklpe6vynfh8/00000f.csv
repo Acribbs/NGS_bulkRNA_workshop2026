@@ -1,0 +1,32 @@
+"0","# Pregnant vs. Virgin (main effect)"
+"0","res_pregnant_virgin <- results(dds_wald,"
+"0","                                contrast = c(""Status"", ""pregnant"", ""virgin""))"
+"0",""
+"0","# Summary"
+"0","summary(res_pregnant_virgin, alpha = 0.05)"
+"1","
+"
+"1","out of 17053 with nonzero total read count
+"
+"1","adjusted p-value < 0.05
+"
+"1","LFC > 0 (up)       : 1599, 9.4%
+"
+"1","LFC < 0 (down)     : 1875, 11%
+"
+"1","outliers [1]       : 0, 0%
+"
+"1","low counts [2]     : 662, 3.9%
+"
+"1","(mean count < 1)
+"
+"1","[1] see 'cooksCutoff' argument of ?results
+"
+"1","[2] see 'independentFiltering' argument of ?results
+"
+"1","
+"
+"0","# MA plot"
+"0","DESeq2::plotMA(res_pregnant_virgin,"
+"0","               ylim = c(-3, 3),"
+"0","               main = ""MA Plot: Pregnant vs. Virgin (Main Effect)"")"

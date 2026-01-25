@@ -1,0 +1,8 @@
+"0","# Top 20 most significant genes"
+"0","top_lrt <- res_status_df %>%"
+"0","  filter(!is.na(padj)) %>%"
+"0","  head(20)"
+"0",""
+"0","knitr::kable(top_lrt[, c(""GeneSymbol"", ""GeneName"", ""baseMean"", ""stat"", ""pvalue"", ""padj"")], "
+"0","             digits = 3,"
+"0","             caption = ""Top 20 Most Significant Genes from LRT"")"

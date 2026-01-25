@@ -1,0 +1,25 @@
+"0","total_counts <- colSums(count_matrix)"
+"0",""
+"0","qc_df <- data.frame("
+"0","  Sample = names(total_counts),"
+"0","  TotalCounts = total_counts,"
+"0","  Group = metadata$Group[match(names(total_counts), metadata$Sample)],"
+"0","  CellType = metadata$CellType[match(names(total_counts), metadata$Sample)],"
+"0","  Status = metadata$Status[match(names(total_counts), metadata$Sample)]"
+"0",")"
+"0",""
+"0","ggplot(qc_df, aes(x = Sample, y = TotalCounts, fill = Group)) +"
+"0","  geom_bar(stat = ""identity"") +"
+"0","  theme_bw() +"
+"0","  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +"
+"0","  labs(title = ""Total Counts Per Sample"","
+"0","       y = ""Total Read Counts"","
+"0","       x = ""Sample"") +"
+"0","  scale_fill_brewer(palette = ""Set3"")"
+"1","[1m[33mError[39m in `geom_bar()`:[22m
+[38;5;232m[33m![38;5;232m Problem while computing aesthetics.
+[36mℹ[38;5;232m Error occurred in the 1st layer.[39m
+[1mCaused by error:[22m
+[33m![39m object 'Sample' not found
+[90mRun `]8;;x-r-run:rlang::last_trace()rlang::last_trace()]8;;` to see where the error occurred.[39m
+"

@@ -87,6 +87,7 @@ library(pheatmap)
 library(DEGreport)
 library(dplyr)
 library(tidyr)
+library(tibble)
 library(ComplexHeatmap)
 library(circlize)
 ```
@@ -121,21 +122,100 @@ cat("Gene annotation dimensions:", dim(gene_annot), "\n")
 ## Prepare Count Matrix
 
 ```{r prepare-counts}
-# Extract sample columns
+# Check input data
+cat("Counts file columns:", paste(colnames(counts), collapse = ", "), "\n")
+cat("Number of columns in counts:", ncol(counts), "\n")
+
+# Extract sample columns (everything except EnsemblID and GeneSymbol)
 sample_cols <- setdiff(colnames(counts), c("EnsemblID", "GeneSymbol"))
-count_matrix <- as.matrix(counts[, sample_cols])
+cat("Sample columns found:", length(sample_cols), "\n")
+cat("Sample column names:", paste(sample_cols, collapse = ", "), "\n")
+
+if (length(sample_cols) == 0) {
+  stop("No sample columns found in counts file. Please check the file format.")
+}
+
+# Create count matrix and preserve column names
+count_matrix <- as.matrix(counts[, sample_cols, drop = FALSE])
+
+# Ensure column names are preserved
+if (is.null(colnames(count_matrix))) {
+  cat("Warning: Column names were lost. Restoring from sample_cols.\n")
+  colnames(count_matrix) <- sample_cols
+}
 
 # Set row names to EnsemblID
-rownames(count_matrix) <- counts$EnsemblID
+if (!is.null(counts$EnsemblID)) {
+  rownames(count_matrix) <- counts$EnsemblID
+} else {
+  stop("EnsemblID column not found in counts file.")
+}
 
-# Clean sample names if needed
+# Clean sample names if needed (remove .bam or .sam extensions)
 colnames(count_matrix) <- gsub("\\.(bam|sam)$", "", colnames(count_matrix))
 
-# Verify sample names match
+# Verify count matrix
+cat("Count matrix dimensions:", dim(count_matrix), "\n")
+cat("Count matrix has column names:", !is.null(colnames(count_matrix)), "\n")
 cat("Sample names in counts:", paste(colnames(count_matrix), collapse = ", "), "\n")
 cat("Sample names in metadata:", paste(metadata$Sample, collapse = ", "), "\n")
 
-all(metadata$Sample %in% colnames(count_matrix))
+# Try to match sample names - they might have different formats
+# First, try exact match
+samples_in_both <- intersect(colnames(count_matrix), metadata$Sample)
+cat("Exact matches found:", length(samples_in_both), "\n")
+
+# If no exact matches, try to find partial matches or clean names
+if (length(samples_in_both) == 0) {
+  cat("\nNo exact matches found. Attempting to match sample names...\n")
+  
+  # Try removing common prefixes/suffixes and matching
+  count_names_clean <- colnames(count_matrix)
+  metadata_names_clean <- metadata$Sample
+  
+  # Try various cleaning strategies
+  # Remove file extensions
+  count_names_clean <- gsub("\\.(txt|tsv|csv|gz)$", "", count_names_clean)
+  metadata_names_clean <- gsub("\\.(txt|tsv|csv|gz)$", "", metadata_names_clean)
+  
+  # Remove common prefixes
+  count_names_clean <- gsub("^X", "", count_names_clean)
+  metadata_names_clean <- gsub("^X", "", metadata_names_clean)
+  
+  # Try matching cleaned names
+  samples_in_both <- intersect(count_names_clean, metadata_names_clean)
+  if (length(samples_in_both) > 0) {
+    cat("Found", length(samples_in_both), "matches after cleaning names\n")
+    # Update column names to match
+    colnames(count_matrix) <- count_names_clean
+    metadata$Sample <- metadata_names_clean
+  } else {
+    # Try matching by position if same number of samples
+    if (ncol(count_matrix) == nrow(metadata)) {
+      cat("Same number of samples found. Attempting to match by position...\n")
+      cat("This assumes samples are in the same order in both files.\n")
+      # We'll match by position in prepare-metadata chunk
+    } else {
+      cat("\nERROR: Cannot match samples automatically.\n")
+      cat("Count matrix samples:", paste(colnames(count_matrix), collapse = ", "), "\n")
+      cat("Metadata samples:", paste(metadata$Sample, collapse = ", "), "\n")
+      cat("\nPlease check that sample names match between files.\n")
+      cat("You may need to manually rename samples in one of the files.\n")
+    }
+  }
+} else {
+  cat("Found", length(samples_in_both), "exact matches\n")
+}
+
+if (length(samples_in_both) < length(metadata$Sample)) {
+  cat("Warning: Some metadata samples not found in counts\n")
+  cat("Missing from counts:", paste(setdiff(metadata$Sample, colnames(count_matrix)), collapse = ", "), "\n")
+}
+
+if (length(samples_in_both) < length(colnames(count_matrix))) {
+  cat("Warning: Some count samples not found in metadata\n")
+  cat("Missing from metadata:", paste(setdiff(colnames(count_matrix), metadata$Sample), collapse = ", "), "\n")
+}
 ```
 
 ## Prepare Metadata
@@ -146,8 +226,61 @@ metadata$Status <- factor(metadata$Status, levels = c("virgin", "pregnant", "lac
 metadata$CellType <- factor(metadata$CellType, levels = c("basal", "luminal"))
 metadata$Group <- factor(metadata$Group)
 
-# Ensure sample order matches count matrix
-metadata <- metadata[match(colnames(count_matrix), metadata$Sample), ]
+# Keep only samples that are in both count matrix and metadata
+# Check if count matrix has column names
+if (is.null(colnames(count_matrix))) {
+  stop("Count matrix has no column names. Please check the prepare-counts chunk.")
+}
+
+# Try exact match first
+common_samples <- intersect(colnames(count_matrix), metadata$Sample)
+
+cat("Common samples found (exact match):", length(common_samples), "\n")
+
+# If no exact matches, try matching by position (if same number)
+if (length(common_samples) == 0 && ncol(count_matrix) == nrow(metadata)) {
+  cat("No exact matches, but same number of samples. Matching by position...\n")
+  cat("WARNING: This assumes samples are in the same order in both files.\n")
+  common_samples <- colnames(count_matrix)
+  # Update metadata Sample column to match count matrix column names
+  metadata$Sample <- colnames(count_matrix)
+  cat("Matched", length(common_samples), "samples by position\n")
+}
+
+if (length(common_samples) == 0) {
+  cat("\nERROR: Cannot match samples.\n")
+  cat("Count matrix column names:", paste(colnames(count_matrix), collapse = ", "), "\n")
+  cat("Metadata Sample column:", paste(metadata$Sample, collapse = ", "), "\n")
+  cat("\nPossible solutions:\n")
+  cat("1. Check that sample names match exactly between files\n")
+  cat("2. Rename samples in one file to match the other\n")
+  cat("3. If samples are in the same order, the code will match by position\n")
+  stop("No common samples found between count matrix and metadata. Please check sample names.")
+}
+
+# Filter count matrix to only common samples (preserve column names)
+count_matrix <- count_matrix[, common_samples, drop = FALSE]
+
+# Verify column names are preserved
+if (is.null(colnames(count_matrix))) {
+  cat("Warning: Column names lost during filtering. Restoring.\n")
+  colnames(count_matrix) <- common_samples
+}
+cat("Count matrix column names after filtering:", paste(colnames(count_matrix), collapse = ", "), "\n")
+
+# Filter and reorder metadata to match count matrix column order
+# Remove any NAs from match
+metadata_match_idx <- match(common_samples, metadata$Sample)
+if (any(is.na(metadata_match_idx))) {
+  stop("Some common samples not found in metadata. Please check data files.")
+}
+metadata <- metadata[metadata_match_idx, , drop = FALSE]
+rownames(metadata) <- metadata$Sample
+
+# Verify alignment
+cat("Count matrix dimensions:", dim(count_matrix), "\n")
+cat("Metadata dimensions:", dim(metadata), "\n")
+cat("Sample names match:", identical(colnames(count_matrix), rownames(metadata)), "\n")
 
 # Verify
 head(metadata)
@@ -161,31 +294,66 @@ table(metadata$CellType, metadata$Status)
 ## Total Counts Per Sample
 
 ```{r qc-total-counts}
-total_counts <- colSums(count_matrix)
+# Diagnostic checks
+cat("Count matrix dimensions:", dim(count_matrix), "\n")
+cat("Count matrix column names:", paste(colnames(count_matrix), collapse = ", "), "\n")
+cat("Metadata dimensions:", dim(metadata), "\n")
+cat("Metadata row names:", paste(rownames(metadata), collapse = ", "), "\n")
 
+# Check if data is available
+if (ncol(count_matrix) == 0) {
+  stop("Count matrix has no columns. Please check data loading.")
+}
+
+if (nrow(metadata) == 0) {
+  stop("Metadata is empty. Please check data loading.")
+}
+
+# Calculate total counts
+total_counts <- colSums(count_matrix)
+cat("Total counts calculated for", length(total_counts), "samples\n")
+
+# Ensure metadata is aligned with count matrix
+if (!identical(colnames(count_matrix), rownames(metadata))) {
+  cat("Warning: Aligning metadata with count matrix\n")
+  metadata <- metadata[match(colnames(count_matrix), rownames(metadata)), ]
+}
+
+# Create QC data frame
 qc_df <- data.frame(
-  Sample = names(total_counts),
-  TotalCounts = total_counts,
-  Group = metadata$Group[match(names(total_counts), metadata$Sample)],
-  CellType = metadata$CellType[match(names(total_counts), metadata$Sample)],
-  Status = metadata$Status[match(names(total_counts), metadata$Sample)]
+  Sample = colnames(count_matrix),
+  TotalCounts = as.numeric(total_counts),
+  Group = as.character(metadata$Group),
+  CellType = as.character(metadata$CellType),
+  Status = as.character(metadata$Status),
+  stringsAsFactors = FALSE
 )
 
-ggplot(qc_df, aes(x = Sample, y = TotalCounts, fill = Group)) +
-  geom_bar(stat = "identity") +
-  theme_bw() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  labs(title = "Total Counts Per Sample",
-       y = "Total Read Counts",
-       x = "Sample") +
-  scale_fill_brewer(palette = "Set3")
+# Verify the data frame
+cat("QC data frame dimensions:", dim(qc_df), "\n")
+cat("QC data frame columns:", paste(colnames(qc_df), collapse = ", "), "\n")
+head(qc_df)
+
+# Create plot
+if (nrow(qc_df) > 0) {
+  ggplot(qc_df, aes(x = Sample, y = TotalCounts, fill = Group)) +
+    geom_bar(stat = "identity") +
+    theme_bw() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+    labs(title = "Total Counts Per Sample",
+         y = "Total Read Counts",
+         x = "Sample") +
+    scale_fill_brewer(palette = "Set3")
+} else {
+  cat("Error: qc_df is empty. Cannot create plot.\n")
+}
 ```
 
 ## Number of Genes Detected Per Sample
 
 ```{r qc-genes-detected}
 genes_detected <- colSums(count_matrix > 0)
-qc_df$GenesDetected <- genes_detected[match(qc_df$Sample, names(genes_detected))]
+qc_df$GenesDetected <- as.numeric(genes_detected)
 
 ggplot(qc_df, aes(x = Sample, y = GenesDetected, fill = Group)) +
   geom_bar(stat = "identity") +
@@ -260,10 +428,26 @@ For this factorial design, we use:
 ## Create DESeqDataSet
 
 ```{r create-dds}
+# Final verification before creating DESeqDataSet
+# Ensure metadata is a data.frame with rownames matching count matrix columns
+metadata_df <- as.data.frame(metadata)
+rownames(metadata_df) <- colnames(count_matrix)
+
+# Verify alignment one more time
+cat("Count matrix column names:", paste(colnames(count_matrix), collapse = ", "), "\n")
+cat("Metadata row names:", paste(rownames(metadata_df), collapse = ", "), "\n")
+cat("Names match:", identical(colnames(count_matrix), rownames(metadata_df)), "\n")
+
+# Ensure count matrix is numeric
+count_matrix <- matrix(as.numeric(count_matrix), 
+                       nrow = nrow(count_matrix),
+                       ncol = ncol(count_matrix),
+                       dimnames = dimnames(count_matrix))
+
 # Create DESeqDataSet with full model including interaction
 dds <- DESeqDataSetFromMatrix(
   countData = count_matrix,
-  colData = metadata,
+  colData = metadata_df,
   design = ~ CellType + Status + CellType:Status
 )
 
@@ -312,9 +496,13 @@ This tests: "Are there genes that change across developmental stages (regardless
 
 ```{r lrt-status}
 # Create new DDS for main effect test
+# Use the same properly formatted metadata
+metadata_df_status <- as.data.frame(metadata)
+rownames(metadata_df_status) <- colnames(count_matrix)
+
 dds_status <- DESeqDataSetFromMatrix(
   countData = count_matrix,
-  colData = metadata,
+  colData = metadata_df_status,
   design = ~ CellType + Status
 )
 
@@ -507,20 +695,8 @@ sig_genes_lrt <- res_status_df %>%
 vsd_sig <- vsd[sig_genes_lrt, ]
 
 # Prepare data for degPatterns
-# Need to create a data frame with gene, sample, and expression
-# Note: degPatterns expects specific column names
-pattern_data <- assay(vsd_sig) %>%
-  as.data.frame() %>%
-  rownames_to_column("genes") %>%
-  tidyr::pivot_longer(cols = -genes, names_to = "samplename", values_to = "value") %>%
-  left_join(
-    colData(vsd_sig) %>%
-      as.data.frame() %>%
-      rownames_to_column("samplename") %>%
-      select(samplename, Status, CellType, Group),
-    by = "samplename"
-  ) %>%
-  mutate(Group = paste(CellType, Status, sep = "_"))
+# degPatterns expects a MATRIX with genes as rows and samples as columns
+# NOT long format - it needs wide format
 
 # Run degPatterns
 # Note: This may take a few minutes
@@ -534,21 +710,45 @@ if (length(sig_genes_lrt) > 1000) {
     pull(EnsemblID)
   
   vsd_sig <- vsd[top_genes_for_clustering, ]
-  pattern_data <- assay(vsd_sig) %>%
-    as.data.frame() %>%
-    rownames_to_column("genes") %>%
-    tidyr::pivot_longer(cols = -genes, names_to = "samplename", values_to = "value") %>%
-    left_join(
-      colData(vsd_sig) %>%
-        as.data.frame() %>%
-        rownames_to_column("samplename") %>%
-        select(samplename, Status, CellType, Group),
-      by = "samplename"
-    ) %>%
-    mutate(Group = paste(CellType, Status, sep = "_"))
 }
 
-patterns <- degPatterns(pattern_data, 
+# Extract expression matrix (genes as rows, samples as columns)
+expression_matrix <- assay(vsd_sig)
+
+# Prepare metadata for degPatterns (one row per sample)
+# IMPORTANT: metadata must have samplename as ROW NAMES
+metadata_patterns <- colData(vsd_sig) %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("samplename") %>%
+  select(samplename, Status, CellType, Group) %>%
+  distinct(samplename, .keep_all = TRUE) %>%
+  as.data.frame()
+
+# Set samplename as row names
+rownames(metadata_patterns) <- metadata_patterns$samplename
+# Remove samplename column (it's now the row name)
+metadata_patterns$samplename <- NULL
+
+# Verify data structure
+cat("Expression matrix dimensions:", dim(expression_matrix), "\n")
+cat("Expression matrix column names:", paste(colnames(expression_matrix), collapse = ", "), "\n")
+cat("Metadata dimensions:", dim(metadata_patterns), "\n")
+cat("Metadata row names:", paste(rownames(metadata_patterns), collapse = ", "), "\n")
+cat("Column names match row names:", identical(colnames(expression_matrix), rownames(metadata_patterns)), "\n")
+
+# Ensure column names of matrix match row names of metadata
+if (!identical(colnames(expression_matrix), rownames(metadata_patterns))) {
+  # Reorder metadata to match matrix columns
+  metadata_patterns <- metadata_patterns[colnames(expression_matrix), , drop = FALSE]
+  cat("Reordered metadata to match matrix columns\n")
+}
+
+# Run degPatterns
+# Note: degPatterns expects:
+# - A matrix with genes as rows and samples as columns
+# - metadata: data frame with one row per sample, with samplename as ROW NAMES
+patterns <- degPatterns(expression_matrix, 
+                        metadata = metadata_patterns,
                         time = "Status",
                         col = "CellType",
                         minc = 5,
@@ -565,7 +765,19 @@ head(patterns$df)
 # Extract cluster information
 cluster_info <- patterns$df
 
-# Merge with expression data
+# Create long format data for plotting (from expression matrix)
+pattern_data <- expression_matrix %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("genes") %>%
+  tidyr::pivot_longer(cols = -genes, names_to = "samplename", values_to = "value") %>%
+  left_join(
+    metadata_patterns %>%
+      tibble::rownames_to_column("samplename") %>%
+      select(samplename, Status, CellType, Group),
+    by = "samplename"
+  )
+
+# Merge with cluster information
 pattern_data_clustered <- pattern_data %>%
   left_join(cluster_info[, c("genes", "cluster")], by = "genes")
 
@@ -631,12 +843,11 @@ For cell-type-specific contrasts, we need to account for both the main effect an
 cat("Available coefficients:\n")
 print(resultsNames(dds_wald))
 
-# Lactate vs. Virgin in Luminal cells
-# This requires combining: Status_lactate_vs_virgin + CellTypeluminal:Statuslactate
-# The exact names depend on DESeq2's naming convention
+# Lactate vs. Virgin (main effect)
+# Note: This shows the main effect of Status, which applies to the reference cell type (basal)
+# For cell-type-specific comparisons with interactions, you would need to use the full interaction model
 res_luminal_lactate_virgin <- results(dds_wald,
-                                       contrast = c("Status", "lactate", "virgin"),
-                                       addMLE = TRUE)
+                                       contrast = c("Status", "lactate", "virgin"))
 
 # For cell-type-specific comparison, we can also use:
 # Note: This is a simplified approach - for exact cell-type-specific contrasts,
@@ -659,8 +870,7 @@ DESeq2::plotMA(res_luminal_lactate_virgin,
 ```{r wald-pregnant-virgin}
 # Pregnant vs. Virgin (main effect)
 res_pregnant_virgin <- results(dds_wald,
-                                contrast = c("Status", "pregnant", "virgin"),
-                                addMLE = TRUE)
+                                contrast = c("Status", "pregnant", "virgin"))
 
 # Summary
 summary(res_pregnant_virgin, alpha = 0.05)
@@ -676,8 +886,7 @@ DESeq2::plotMA(res_pregnant_virgin,
 ```{r wald-lactate-pregnant}
 # Lactate vs. Pregnant
 res_lactate_pregnant <- results(dds_wald,
-                                 contrast = c("Status", "lactate", "pregnant"),
-                                 addMLE = TRUE)
+                                 contrast = c("Status", "lactate", "pregnant"))
 
 # Summary
 summary(res_lactate_pregnant, alpha = 0.05)
@@ -707,13 +916,14 @@ interesting_genes <- res_status_df %>%
   head(4)
 
 # Function to plot gene across timepoints
+# Use dds_lrt_status which has been processed through DESeq() and has size factors
 plot_gene_temporal <- function(ensembl_id, gene_symbol) {
-  # Extract normalized counts
+  # Extract normalized counts from the processed DESeqDataSet
   plot_data <- data.frame(
-    Count = counts(dds_status[ensembl_id, ], normalized = TRUE)[1, ],
-    Status = colData(dds_status)$Status,
-    CellType = colData(dds_status)$CellType,
-    Sample = colnames(dds_status)
+    Count = counts(dds_lrt_status[ensembl_id, ], normalized = TRUE)[1, ],
+    Status = colData(dds_lrt_status)$Status,
+    CellType = colData(dds_lrt_status)$CellType,
+    Sample = colnames(dds_lrt_status)
   )
   
   # Calculate means and SE for each group

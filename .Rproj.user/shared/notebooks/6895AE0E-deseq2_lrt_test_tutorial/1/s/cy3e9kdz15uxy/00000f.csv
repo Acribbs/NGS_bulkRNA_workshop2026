@@ -1,0 +1,8 @@
+"0","design_table <- data.frame("
+"0","  CellType = rep(rep(c(""basal"", ""luminal""), each = 3), 2),"
+"0","  Status = rep(c(""virgin"", ""pregnant"", ""lactate""), 4),"
+"0","  Group = paste(rep(rep(c(""basal"", ""luminal""), each = 3), 2), "
+"0","                rep(c(""virgin"", ""pregnant"", ""lactate""), 4), sep = ""_""),"
+"0","  Replicate = rep(1:2, each = 6)"
+"0",")"
+"0","knitr::kable(design_table, caption = ""Experimental Design: 2 cell types × 3 stages × 2 replicates = 12 samples"")"
