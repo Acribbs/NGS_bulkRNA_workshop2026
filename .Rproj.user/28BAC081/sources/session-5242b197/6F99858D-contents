@@ -1,0 +1,249 @@
+
+
+# Clustering of all samples
+
+Data quality assessment and quality control (i.e. the removal of insufficiently good data) are essential steps of any data analysis. These steps should typically be performed very early in the analysis of a new data set, preceding or in parallel to the differential expression testing.
+
+We define the term quality as fitness for purpose. Our purpose is the detection of differentially expressed genes, and we are looking in particular for samples whose experimental treatment suffered from an anormality that renders the data points obtained from these particular samples detrimental to our purpose.
+
+In this page, you will see all of the analysis performed to understand which samples are potentially going to negatively impact the downstream analysis.
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(cache=TRUE)
+library(org.Hs.eg.db)
+library(DESeq2)
+library(pheatmap)
+library(dplyr)
+library(RColorBrewer)
+library(pheatmap)
+library(ggplot2)
+library(ggrepel)
+```
+
+
+```{r , echo=TRUE,warning=FALSE,message=FALSE,error=FALSE, include=FALSE}
+
+
+if (file.exists("featurecounts.tsv.gz")) {
+  df_mRNA <- read.table(gzfile("featurecounts.tsv.gz"), sep = "\t", header = TRUE, row.names = 1)
+  colnames(df_mRNA) <- gsub(".", "-", x = colnames(df_mRNA), fixed = T)
+} else {
+  print("Please add featurecounts.tsv.gz into the project folder as it seems to be missing")
+}
+
+# import your design file
+meta_data <- read.table("design.csv", sep=",", header = TRUE) 
+
+
+rownames(meta_data) <- meta_data$Sample
+
+df_mRNA = df_mRNA[,rownames(meta_data)]
+all(rownames(meta_data) %in% colnames(df_mRNA))
+
+
+```
+
+
+# Set up the DESeq2 object
+
+```{r , include=FALSE}
+
+dds<- DESeqDataSetFromMatrix(countData=df_mRNA,
+                               colData=meta_data,
+                               design=~disease)
+
+is(df_mRNA, "SummarizedExperiment")
+is(meta_data, "SummarizedExperiment")
+is(dds, "SummarizedExperiment")
+
+dds <- DESeq(dds)
+```
+
+# Return the results
+
+
+```{r}
+
+res <- results(dds, contrast = c("disease", "GDM", "Normal"))
+
+res[order(res$padj),] %>%  head
+
+res_df <- data.frame(res[order(res$padj),])
+```
+
+# Explore the results 
+
+
+
+# Heatmap of counts matrix {.tabset .tabset-fade}
+
+To explore a count matrix, it is often instructive to look at it as a heatmap. Below we show how to produce such a heatmap for various transformations of the data. I have plotted a heatmap of the top 200 highly expressed genes to determine if the samples cluster together by condition.
+
+```{r , echo=FALSE}
+
+vsd <- varianceStabilizingTransformation(dds, blind=FALSE)
+select <- order(rowMeans(counts(dds, normalized=TRUE)), decreasing=TRUE)[1:200]
+data = colData(dds)[,3]
+df <- as.data.frame(data)
+annotation <- data.frame(Var1 = meta_data[[2]])
+rownames(annotation) <- colnames(assay(vsd))
+pheatmap(assay(vsd)[select,], cluster_rows = FALSE, show_rownames = FALSE,
+           cluster_cols = TRUE, annotation=annotation)
+  
+
+```
+
+
+
+# Explore the histogram of p-values
+
+```{r}
+
+ggplot(res_df, aes(x = pvalue)) +
+  geom_histogram(binwidth = 0.01, fill = "Royalblue", boundary = 0)
+```
+
+
+
+# Heatmap of sample-to-sample distances {.tabset .tabset-fade}
+
+Another use of the transformed data is sample clustering. Here, we apply the dist function to the transpose of the transformed count matrix to get sample-to-sample distances.
+
+A heatmap of this distance matrix gives us an overview over similarities and dissimilarities between samples. We have to provide a hierarchical clustering hc to the heatmap function based on the sample distances, or else the heatmap function would calculate a clustering based on the distances between the rows/columns of the distance matrix.
+
+```{r , echo=FALSE}
+
+sampleDists <- dist(t(assay(vsd)))
+samplDistMatrix <- as.matrix(sampleDists)
+rownames(samplDistMatrix) <- meta_data[[2]]
+colnames(samplDistMatrix) <- meta_data[[1]]
+colors <- colorRampPalette(rev(brewer.pal(9, "Blues")) )(255)
+
+pheatmap(samplDistMatrix, 
+         clustering_distance_cols = sampleDists, 
+         clustering_distance_rows = sampleDists,
+         color = colors)
+
+
+```
+
+
+# PCA analysis of the samples {.tabset .tabset-fade}
+
+Related to the distance matrix is the PCA plot, which shows the samples in the 2D plane spanned by their first two principal components. This type of plot is useful for visualizing the overall effect of experimental covariates and batch effects.
+
+## PCA - group
+
+```{r , echo=FALSE}
+one <- colnames(meta_data)[[2]]
+
+plotPCA(vsd, intgroup=c(as.character(one)))
+
+```
+
+## MA plots {.tabset .tabset-fade}
+
+In DESeq2, the function plotMA shows the log2 fold changes attributable to a given variable over the mean of normalized counts for all the samples in the DESeqDataSet. Points will be colored red if the adjusted p value is less than 0.01. Points which fall out of the window are plotted as open triangles pointing either up or down.
+
+
+```{r, results='asis', echo = FALSE}
+
+plt <- DESeq2::plotMA(res)
+
+```
+
+## Volcano plots {.tabset .tabset-fade}
+
+
+
+```{r, results='asis', echo = FALSE}
+theme_Publication <- function(base_size=14, base_family="arial") {
+  library(grid)
+  library(ggthemes)
+  (theme_foundation(base_size=base_size, base_family=base_family)
+    + theme(plot.title = element_text(face = "bold",
+                                      size = rel(1.2), hjust = 0.5),
+            text = element_text(),
+            panel.background = element_rect(colour = NA),
+            plot.background = element_rect(colour = NA),
+            panel.border = element_rect(colour = NA),
+            axis.title = element_text(face = "bold",size = rel(1)),
+            axis.title.y = element_text(angle=90,vjust =2),
+            axis.title.x = element_text(vjust = -0.2),
+            axis.text = element_text(), 
+            axis.line = element_line(colour="black"),
+            axis.ticks = element_line(),
+            panel.grid.major = element_line(colour="#f0f0f0"),
+            panel.grid.minor = element_blank(),
+            legend.key = element_rect(colour = NA),
+            legend.position = "bottom",
+            legend.direction = "horizontal",
+            legend.key.size= unit(0.2, "cm"),
+            legend.title = element_text(face="italic"),
+            strip.background=element_rect(colour="#f0f0f0",fill="#f0f0f0"),
+            strip.text = element_text(face="bold")
+    ))
+  
+}
+
+scale_fill_Publication <- function(...){
+  library(scales)
+  discrete_scale("fill","Publication",manual_pal(values = c("#386cb0","#fdb462","#7fc97f","#ef3b2c","#662506","#a6cee3","#fb9a99","#984ea3","#ffff33")), ...)
+  
+}
+
+scale_colour_Publication <- function(...){
+  library(scales)
+  discrete_scale("colour","Publication",manual_pal(values = c("#386cb0","#fdb462","#7fc97f","#ef3b2c","#662506","#a6cee3","#fb9a99","#984ea3","#ffff33")), ...)
+  
+}
+
+plot_volcano <- function(res){
+  
+  test <- as.data.frame(res)
+  
+  data <- as.vector(rownames(test))
+  annots <-  AnnotationDbi::select(org.Hs.eg.db, keys=data,
+                                   columns="SYMBOL", keytype = "ENSEMBL")
+  
+  result <- merge(test, annots, by.x="row.names", by.y="ENSEMBL")
+  res <- result %>% 
+    dplyr::select(log2FoldChange, SYMBOL, baseMean, padj, Row.names) %>% 
+    na.omit()
+  
+  
+  mutateddf <- mutate(res, sig=ifelse(res$padj<0.01, "padj<0.01", "Not Sig")) #Will have different colors depending on significance
+  input <- cbind(gene=rownames(mutateddf), mutateddf )
+  input <- input %>% 
+    arrange(input$padj)
+  
+  symbol_data <- head(input, 30)
+  
+  #convert the rownames to a column
+  volc = ggplot(input, aes(log2FoldChange, -log10(padj))) + #volcanoplot with log2Foldchange versus pvalue
+    geom_point(aes(col=sig)) + #add points colored by significance
+    geom_point(data=symbol_data, aes(log2FoldChange, -log10(padj)), colour="red") +
+    ggtitle("Volcano") #e.g. 'Volcanoplot DESeq2'
+  
+  #setEPS()
+  #postscript("MUG_volcano.eps")
+  volcano <- volc+geom_text_repel(data=symbol_data, aes(label=`SYMBOL`)) + scale_colour_Publication() + theme_bw()#adding text for the genes
+  return(volcano)
+}
+
+
+plt <- plot_volcano(res)
+plt
+
+```
+
+
+# Heatmap of genes with high variance
+
+
+```{r}
+select = order(rowMeans(assay(vsd)), decreasing = TRUE)[1:30]
+pheatmap( assay(vsd)[select, ],
+     scale = "row",
+     annotation=annotation)
+```

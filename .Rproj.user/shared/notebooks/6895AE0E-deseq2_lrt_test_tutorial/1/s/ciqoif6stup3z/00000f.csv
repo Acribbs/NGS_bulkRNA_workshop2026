@@ -1,0 +1,7 @@
+"0","# Quick PCA on raw counts to check for batch effects"
+"0","# Use log-transformed counts for PCA"
+"0","log_counts <- log2(count_matrix + 1)"
+"0","pca_raw <- prcomp(t(log_counts), scale. = TRUE)"
+"2","Error in prcomp.default(t(log_counts), scale. = TRUE) : 
+  cannot rescale a constant/zero column to unit variance
+"

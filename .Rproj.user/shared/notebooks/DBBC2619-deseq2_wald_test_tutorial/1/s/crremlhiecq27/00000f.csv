@@ -1,0 +1,4 @@
+"0","# MA plot with shrinkage"
+"0","DESeq2::plotMA(res_shrink, "
+"0","               ylim = c(-3, 3),"
+"0","               main = ""MA Plot: Shrunken LFC (apeglm)"")"

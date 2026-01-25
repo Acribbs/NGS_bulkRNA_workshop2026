@@ -1,0 +1,7 @@
+"0","design_table <- data.frame("
+"0","  CellLine = rep(c(""N080611"", ""N061011"", ""N61311"", ""N052611""), each = 2),"
+"0","  Treatment = rep(c(""untrt"", ""trt""), 4),"
+"0","  Sample = paste0(""SRR"", c(""1039508"", ""1039512"", ""1039516"", ""1039520"", "
+"0","                           ""1039509"", ""1039513"", ""1039517"", ""1039521""))"
+"0",")"
+"0","knitr::kable(design_table, caption = ""Experimental Design: 4 cell lines × 2 treatments = 8 samples"")"

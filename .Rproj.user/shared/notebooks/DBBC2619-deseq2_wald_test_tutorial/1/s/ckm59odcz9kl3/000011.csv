@@ -1,0 +1,8 @@
+"0",""
+"0","cat(""\nTop 10 Downregulated Genes:\n"")"
+"1","
+Top 10 Downregulated Genes:
+"
+"0","knitr::kable(top_down[, c(""GeneSymbol"", ""GeneName"", ""baseMean"", ""log2FoldChange"", ""padj"")], "
+"0","             digits = 3,"
+"0","             caption = ""Top 10 Downregulated Genes (padj < 0.05)"")"

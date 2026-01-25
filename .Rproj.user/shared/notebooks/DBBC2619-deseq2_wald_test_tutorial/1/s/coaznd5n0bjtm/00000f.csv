@@ -1,0 +1,27 @@
+"0","# Extract results for Treatment effect"
+"0","res <- results(dds, name = ""Treatment_trt_vs_untrt"")"
+"0",""
+"0","# Summary of results"
+"0","summary(res, alpha = 0.05)"
+"1","
+"
+"1","out of 22369 with nonzero total read count
+"
+"1","adjusted p-value < 0.05
+"
+"1","LFC > 0 (up)       : 2193, 9.8%
+"
+"1","LFC < 0 (down)     : 1807, 8.1%
+"
+"1","outliers [1]       : 0, 0%
+"
+"1","low counts [2]     : 4337, 19%
+"
+"1","(mean count < 5)
+"
+"1","[1] see 'cooksCutoff' argument of ?results
+"
+"1","[2] see 'independentFiltering' argument of ?results
+"
+"1","
+"

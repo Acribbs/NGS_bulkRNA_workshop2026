@@ -1,0 +1,4 @@
+"0","# MA plot without shrinkage"
+"0","DESeq2::plotMA(res, "
+"0","               ylim = c(-3, 3),"
+"0","               main = ""MA Plot: Unshrunken LFC"")"
