@@ -13,6 +13,12 @@ output:
 ---
 
 ```{r setup, include=FALSE}
+# Troubleshooting: If you encounter pandoc errors, try:
+# 1. Restart R session: Session -> Restart R (in RStudio)
+# 2. Reinstall rmarkdown: install.packages("rmarkdown")
+# 3. Check pandoc: rmarkdown::pandoc_version()
+# 4. If issues persist, restart RStudio completely
+
 knitr::opts_chunk$set(
   warning = FALSE,
   message = FALSE,
@@ -65,7 +71,14 @@ design_table <- data.frame(
                 rep(c("virgin", "pregnant", "lactate"), 4), sep = "_"),
   Replicate = rep(1:2, each = 6)
 )
-knitr::kable(design_table, caption = "Experimental Design: 2 cell types × 3 stages × 2 replicates = 12 samples")
+# Use tryCatch to handle potential pandoc/knitr errors
+tryCatch({
+  knitr::kable(design_table, caption = "Experimental Design: 2 cell types × 3 stages × 2 replicates = 12 samples")
+}, error = function(e) {
+  # Fallback: print as a simple table
+  cat("Experimental Design: 2 cell types × 3 stages × 2 replicates = 12 samples\n\n")
+  print(design_table)
+})
 ```
 
 **Key Design Features:**

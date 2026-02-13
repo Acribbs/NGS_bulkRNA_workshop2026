@@ -69,6 +69,33 @@ After completing Stage 1, you should have:
 
 After completing the upstream pipeline, you can proceed to differential expression analysis using DESeq2. This workshop includes two comprehensive tutorials covering different statistical approaches:
 
+### ⚠️ IMPORTANT: Data Preparation Required First
+
+**Before running either tutorial, you MUST prepare the data files by running the data download script:**
+
+```r
+# Run this FIRST before opening any tutorial files
+source("Data_download.R")
+```
+
+This script will:
+- Download the example datasets (airway and GSE60450)
+- Process and clean the data
+- Create the required metadata, counts, and annotation files
+
+**If you skip this step, you will get errors like:**
+```
+Error in file(file, "rt") : cannot open the connection
+```
+
+**Verification:** After running `Data_download.R`, you should see these files in your working directory:
+- `airway_metadata_clean.txt`
+- `airway_counts_ensembl.txt`
+- `airway_gene_annotation.txt`
+- `GSE60450_metadata_clean.txt`
+- `GSE60450_counts_ensembl.txt`
+- `GSE60450_gene_annotation.txt`
+
 ### Tutorial 1: DESeq2 Wald Test Analysis
 
 **File:** `deseq2_wald_test_tutorial.Rmd`
@@ -94,6 +121,32 @@ After completing the upstream pipeline, you can proceed to differential expressi
 
 #### How to Run the Wald Test Tutorial
 
+**⚠️ CRITICAL FIRST STEP: Prepare the Data**
+
+**You MUST run the data preparation script BEFORE opening the tutorial:**
+
+```r
+# Step 1: Set your working directory to the workshop folder
+setwd("/path/to/NGS_bulkRNA_workshop2026")
+
+# Step 2: Run the data preparation script
+source("Data_download.R")
+```
+
+This will download and process the airway dataset, creating:
+- `airway_metadata_clean.txt` — Sample metadata with experimental design
+- `airway_counts_ensembl.txt` — Gene expression counts (Ensembl IDs)
+- `airway_gene_annotation.txt` — Gene symbols and names
+
+**Verify the files exist before proceeding:**
+```r
+file.exists("airway_metadata_clean.txt")
+file.exists("airway_counts_ensembl.txt")
+file.exists("airway_gene_annotation.txt")
+```
+
+If any return `FALSE`, re-run `source("Data_download.R")` and check for error messages.
+
 1. **Install Required R Packages:**
 
    Open R or RStudio and install the necessary packages:
@@ -108,20 +161,7 @@ After completing the upstream pipeline, you can proceed to differential expressi
    install.packages(c("ggplot2", "pheatmap", "dplyr", "tidyr", "gridExtra"))
    ```
 
-2. **Prepare the Data:**
-
-   The tutorial uses the `airway` dataset from Bioconductor. To prepare the data files:
-   ```r
-   # Run the data preparation script
-   source("Data_download.R")
-   ```
-   
-   This will create three files in your working directory:
-   - `airway_metadata_clean.txt` — Sample metadata with experimental design
-   - `airway_counts_ensembl.txt` — Gene expression counts (Ensembl IDs)
-   - `airway_gene_annotation.txt` — Gene symbols and names
-
-3. **Run the Tutorial:**
+2. **Run the Tutorial:**
 
    Open `deseq2_wald_test_tutorial.Rmd` in RStudio and:
    - Click "Knit" to render the HTML report, OR
@@ -168,6 +208,38 @@ After completing the upstream pipeline, you can proceed to differential expressi
 
 #### How to Run the LRT Test Tutorial
 
+**⚠️ CRITICAL FIRST STEP: Prepare the Data**
+
+**You MUST run the data preparation script BEFORE opening the tutorial:**
+
+```r
+# Step 1: Set your working directory to the workshop folder
+setwd("/path/to/NGS_bulkRNA_workshop2026")
+
+# Step 2: Run the data preparation script
+source("Data_download.R")
+```
+
+**Note:** The `Data_download.R` script contains code for BOTH datasets (airway and GSE60450). Running it will prepare data for both tutorials. The GSE60450 section will:
+- Download data from GEO
+- Convert Entrez IDs to Ensembl IDs
+- Handle duplicate Ensembl IDs by aggregating counts
+- Create cleaned metadata and count files
+
+This will create these files in your working directory:
+- `GSE60450_metadata_clean.txt` — Sample metadata with experimental design
+- `GSE60450_counts_ensembl.txt` — Gene expression counts (Ensembl IDs)
+- `GSE60450_gene_annotation.txt` — Gene symbols and names
+
+**Verify the files exist before proceeding:**
+```r
+file.exists("GSE60450_metadata_clean.txt")
+file.exists("GSE60450_counts_ensembl.txt")
+file.exists("GSE60450_gene_annotation.txt")
+```
+
+If any return `FALSE`, re-run `source("Data_download.R")` and check for error messages.
+
 1. **Install Required R Packages:**
 
    ```r
@@ -181,26 +253,7 @@ After completing the upstream pipeline, you can proceed to differential expressi
    install.packages(c("ggplot2", "pheatmap", "dplyr", "tidyr", "tibble", "circlize"))
    ```
 
-2. **Prepare the Data:**
-
-   The tutorial uses data from GEO (GSE60450). To prepare the data files:
-   ```r
-   # Run the data preparation script
-   source("Data_download.R")
-   ```
-   
-   **Note:** The `Data_download.R` script contains code for both datasets. The GSE60450 section will:
-   - Download data from GEO
-   - Convert Entrez IDs to Ensembl IDs
-   - Handle duplicate Ensembl IDs by aggregating counts
-   - Create cleaned metadata and count files
-   
-   This will create three files in your working directory:
-   - `GSE60450_metadata_clean.txt` — Sample metadata with experimental design
-   - `GSE60450_counts_ensembl.txt` — Gene expression counts (Ensembl IDs)
-   - `GSE60450_gene_annotation.txt` — Gene symbols and names
-
-3. **Run the Tutorial:**
+2. **Run the Tutorial:**
 
    Open `deseq2_lrt_test_tutorial.Rmd` in RStudio and:
    - Click "Knit" to render the HTML report, OR
@@ -232,7 +285,12 @@ After completing the upstream pipeline, you can proceed to differential expressi
    - Understand quality control metrics
    - Familiarize yourself with transcript abundance outputs
 
-2. **Proceed to Stage 2 (Downstream Analysis):**
+2. **Prepare Data for Stage 2:**
+   - **CRITICAL:** Run `source("Data_download.R")` to download and prepare all example datasets
+   - Verify that all required data files are created (see file list above)
+   - This step is required before running either downstream tutorial
+
+3. **Proceed to Stage 2 (Downstream Analysis):**
    - Begin with the **Wald Test Tutorial** (simpler, pairwise comparison)
    - Then try the **LRT Test Tutorial** (more complex, multiple conditions)
    - Compare the approaches and understand when to use each
@@ -259,15 +317,24 @@ Differential expression results
 
 ### Common Issues
 
+**Data File Not Found Errors (Most Common!):**
+```
+Error in file(file, "rt") : cannot open the connection
+```
+**Solution:** You MUST run `source("Data_download.R")` FIRST before opening any tutorial files. This script downloads and prepares all required data files. Verify files exist with:
+```r
+list.files(pattern = ".*_metadata_clean.txt|.*_counts_ensembl.txt|.*_gene_annotation.txt")
+```
+
 **R Package Installation Errors:**
 - Ensure you have the latest version of R (≥ 4.0 recommended)
 - For Bioconductor packages, use `BiocManager::install()` rather than `install.packages()`
 - Some packages may require system dependencies (e.g., `libcurl`, `libxml2`)
 
-**Data File Not Found Errors:**
-- Ensure you've run `source("Data_download.R")` before running the tutorials
+**Data File Not Found Errors (Other Causes):**
 - Check that data files are in the same directory as the R Markdown files
 - Verify file names match exactly (case-sensitive)
+- Ensure your working directory is set correctly: `getwd()` should show the workshop folder
 
 **Memory Issues:**
 - DESeq2 analysis can be memory-intensive for large datasets
