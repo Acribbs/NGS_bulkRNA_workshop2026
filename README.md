@@ -69,6 +69,12 @@ After completing Stage 1, you should have:
 
 After completing the upstream pipeline, you can proceed to differential expression analysis using DESeq2. This workshop includes two comprehensive tutorials covering different statistical approaches:
 
+**Note on File Formats:** Each tutorial is available in two formats:
+- **`.Rmd` files** — For use with RStudio (knit using rmarkdown)
+- **`.qmd` files** — For use with Positron or any Quarto-compatible editor (render using Quarto)
+
+Both formats contain identical content and can be used interchangeably based on your preferred environment.
+
 ### ⚠️ IMPORTANT: Data Preparation Required First
 
 **Before running either tutorial, you MUST prepare the data files by running the data download script:**
@@ -98,7 +104,9 @@ Error in file(file, "rt") : cannot open the connection
 
 ### Tutorial 1: DESeq2 Wald Test Analysis
 
-**File:** `deseq2_wald_test_tutorial.Rmd`
+**Files:** 
+- `deseq2_wald_test_tutorial.Rmd` (for RStudio)
+- `deseq2_wald_test_tutorial.qmd` (for Positron/Quarto)
 
 **Use Case:** Pairwise comparisons between two conditions (e.g., treated vs. untreated)
 
@@ -163,6 +171,8 @@ If any return `FALSE`, re-run `source("Data_download.R")` and check for error me
 
 2. **Run the Tutorial:**
 
+   **Option A: Using RStudio (with .Rmd files)**
+   
    Open `deseq2_wald_test_tutorial.Rmd` in RStudio and:
    - Click "Knit" to render the HTML report, OR
    - Run chunks interactively by clicking "Run" on each code chunk
@@ -170,6 +180,17 @@ If any return `FALSE`, re-run `source("Data_download.R")` and check for error me
    Alternatively, render from the command line:
    ```bash
    Rscript -e "rmarkdown::render('deseq2_wald_test_tutorial.Rmd')"
+   ```
+   
+   **Option B: Using Positron/Quarto (with .qmd files)**
+   
+   Open `deseq2_wald_test_tutorial.qmd` in Positron (or any Quarto-compatible editor) and:
+   - Click "Render" to render the HTML report, OR
+   - Run chunks interactively by clicking "Run" on each code chunk
+   
+   Alternatively, render from the command line:
+   ```bash
+   quarto render deseq2_wald_test_tutorial.qmd
    ```
 
 4. **Expected Workflow:**
@@ -185,7 +206,9 @@ If any return `FALSE`, re-run `source("Data_download.R")` and check for error me
 
 ### Tutorial 2: DESeq2 LRT (Likelihood Ratio Test) Analysis
 
-**File:** `deseq2_lrt_test_tutorial.Rmd`
+**Files:**
+- `deseq2_lrt_test_tutorial.Rmd` (for RStudio)
+- `deseq2_lrt_test_tutorial.qmd` (for Positron/Quarto)
 
 **Use Case:** Testing for changes across multiple conditions or timepoints
 
@@ -255,6 +278,8 @@ If any return `FALSE`, re-run `source("Data_download.R")` and check for error me
 
 2. **Run the Tutorial:**
 
+   **Option A: Using RStudio (with .Rmd files)**
+   
    Open `deseq2_lrt_test_tutorial.Rmd` in RStudio and:
    - Click "Knit" to render the HTML report, OR
    - Run chunks interactively by clicking "Run" on each code chunk
@@ -262,6 +287,17 @@ If any return `FALSE`, re-run `source("Data_download.R")` and check for error me
    Alternatively, render from the command line:
    ```bash
    Rscript -e "rmarkdown::render('deseq2_lrt_test_tutorial.Rmd')"
+   ```
+   
+   **Option B: Using Positron/Quarto (with .qmd files)**
+   
+   Open `deseq2_lrt_test_tutorial.qmd` in Positron (or any Quarto-compatible editor) and:
+   - Click "Render" to render the HTML report, OR
+   - Run chunks interactively by clicking "Run" on each code chunk
+   
+   Alternatively, render from the command line:
+   ```bash
+   quarto render deseq2_lrt_test_tutorial.qmd
    ```
 
 4. **Expected Workflow:**
@@ -377,8 +413,10 @@ NGS_bulkRNA_workshop2026/
 │   ├── README.md                     # Detailed pipeline instructions
 │   └── download_data.sh              # Data download script
 ├── Data_download.R                   # Data preparation for downstream tutorials
-├── deseq2_wald_test_tutorial.Rmd     # Stage 2: Wald test tutorial
-├── deseq2_lrt_test_tutorial.Rmd      # Stage 2: LRT test tutorial
+├── deseq2_wald_test_tutorial.Rmd     # Stage 2: Wald test tutorial (RStudio)
+├── deseq2_wald_test_tutorial.qmd     # Stage 2: Wald test tutorial (Quarto/Positron)
+├── deseq2_lrt_test_tutorial.Rmd      # Stage 2: LRT test tutorial (RStudio)
+├── deseq2_lrt_test_tutorial.qmd      # Stage 2: LRT test tutorial (Quarto/Positron)
 └── [Presentation slides and other materials]
 ```
 
