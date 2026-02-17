@@ -144,15 +144,229 @@ library(org.Mm.eg.db)
 library(AnnotationDbi)
 
 # ============================================
+# 0. MEMORY WARNING AND SETUP
+# ============================================
+
+cat("\n============================================\n")
+cat("GSE60450 Dataset Download\n")
+cat("============================================\n")
+cat("WARNING: This dataset is large and requires significant memory.\n")
+cat("If you encounter memory errors, try:\n")
+cat("1. Increase memory limit before starting R:\n")
+cat("   ulimit -v 50000000  # In terminal before starting R\n")
+cat("2. Or set in R before downloading:\n")
+cat("   Sys.setenv(R_MAX_VSIZE = \"50Gb\")\n")
+cat("============================================\n\n")
+
+# Try to increase memory limit if possible (Mac/Linux)
+tryCatch({
+  Sys.setenv(R_MAX_VSIZE = "50Gb")
+  cat("Attempted to set R_MAX_VSIZE to 50Gb\n")
+}, error = function(e) {
+  cat("Note: Could not set R_MAX_VSIZE (this is normal on some systems)\n")
+})
+
+# ============================================
 # 1. DOWNLOAD DATA FROM GEO
 # ============================================
 
 cat("Downloading data from GEO...\n")
 
-# Download metadata
-gse <- getGEO("GSE60450", GSEMatrix = TRUE)
-gse <- gse[[1]]
-sample_info <- pData(gse)
+# Download metadata with memory-efficient options
+# AnnotGPL = FALSE: Don't download annotation platform data (saves memory)
+cat("Note: This may take a few minutes and use significant memory...\n")
+cat("Using memory-efficient options (AnnotGPL = FALSE)...\n")
+
+# Initialize sample_info
+sample_info <- NULL
+
+# First attempt: Use AnnotGPL = FALSE to save memory
+tryCatch({
+  gse <- getGEO("GSE60450", 
+                GSEMatrix = TRUE,
+                AnnotGPL = FALSE)  # Don't download annotation platform (saves memory)
+  gse <- gse[[1]]
+  sample_info <- pData(gse)
+  
+  # Clear large objects from memory immediately after use
+  rm(gse)
+  gc(verbose = FALSE)
+  
+  cat("Metadata downloaded successfully!\n")
+}, error = function(e) {
+  cat("\nFirst download attempt failed with error:\n")
+  cat(e$message, "\n\n")
+  cat("Trying alternative method: downloading series matrix file directly...\n")
+  
+  # Alternative: Download series matrix file directly (more memory efficient)
+  tryCatch({
+    series_file <- "GSE60450_series_matrix.txt.gz"
+    if (!file.exists(series_file)) {
+      cat("Downloading series matrix file...\n")
+      download.file(
+        "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE60nnn/GSE60450/matrix/GSE60450_series_matrix.txt.gz",
+        series_file,
+        mode = "wb"
+      )
+    }
+    
+    # Parse the series matrix file
+    cat("Parsing series matrix file...\n")
+    gse <- getGEO(filename = series_file, AnnotGPL = FALSE)
+    gse <- gse[[1]]
+    sample_info <<- pData(gse)  # Use <<- to assign to parent scope
+    
+    # Clear memory
+    rm(gse)
+    gc(verbose = FALSE)
+    
+    cat("Metadata downloaded successfully using alternative method!\n")
+  }, error = function(e2) {
+    cat("\nAlternative download method also failed.\n")
+    cat("Error:", e2$message, "\n\n")
+    cat("Trying ultra memory-efficient method: parsing metadata only...\n")
+    
+    # Ultra memory-efficient: Parse only metadata lines from series matrix file
+    tryCatch({
+      series_file <- "GSE60450_series_matrix.txt.gz"
+      if (!file.exists(series_file)) {
+        cat("Series matrix file not found. Downloading...\n")
+        download.file(
+          "https://ftp.ncbi.nlm.nih.gov/geo/series/GSE60nnn/GSE60450/matrix/GSE60450_series_matrix.txt.gz",
+          series_file,
+          mode = "wb"
+        )
+      }
+      
+      cat("Parsing metadata from series matrix file (memory-efficient method)...\n")
+      
+      # Read file line by line, extract only metadata (lines starting with "!")
+      con <- gzfile(series_file, "r")
+      metadata_lines <- character()
+      sample_names <- character()
+      
+      # Read until we hit the data table header (line starting with "ID_REF")
+      while (TRUE) {
+        line <- readLines(con, n = 1)
+        if (length(line) == 0) break
+        
+        # Stop when we reach the data table
+        if (grepl("^ID_REF", line)) {
+          # Extract sample names from header
+          sample_names <- strsplit(line, "\t")[[1]]
+          sample_names <- sample_names[-1]  # Remove "ID_REF"
+          break
+        }
+        
+        # Collect metadata lines
+        if (grepl("^!", line)) {
+          metadata_lines <- c(metadata_lines, line)
+        }
+      }
+      close(con)
+      
+      # Parse metadata into a data frame
+      cat("Extracting sample information from metadata...\n")
+      metadata_list <- list()
+      
+      # First, find how many samples we have by checking a metadata line
+      n_samples <- 0
+      for (line in metadata_lines) {
+        if (grepl("^!Sample_", line)) {
+          parts <- strsplit(line, "\t")[[1]]
+          # Values are after "key = "
+          first_part <- parts[1]
+          if (grepl(" = ", first_part)) {
+            values <- parts[-1]  # All parts after the first
+            n_samples <- length(values)
+            break
+          }
+        }
+      }
+      
+      # If we couldn't determine from metadata, use sample_names length
+      if (n_samples == 0 && length(sample_names) > 0) {
+        n_samples <- length(sample_names)
+      }
+      
+      cat(paste("Found", n_samples, "samples\n"))
+      
+      # Parse each metadata line
+      for (line in metadata_lines) {
+        # Parse lines like "!Sample_title = value1	value2	value3"
+        if (grepl("^!Sample_", line)) {
+          parts <- strsplit(line, "\t")[[1]]
+          first_part <- parts[1]
+          
+          # Extract key name
+          if (grepl(" = ", first_part)) {
+            key_parts <- strsplit(first_part, " = ")[[1]]
+            key <- sub("^!Sample_", "", key_parts[1])
+            # Values are everything after "key = " in first part, plus remaining parts
+            first_value <- if(length(key_parts) > 1) key_parts[2] else ""
+            values <- c(first_value, parts[-1])
+            
+            # Clean up key name (remove special characters)
+            key <- gsub("[^A-Za-z0-9_]", "", key)
+            
+            if (length(values) == n_samples) {
+              metadata_list[[key]] <- values
+            }
+          }
+        }
+      }
+      
+      # Create sample_info data frame
+      if (length(metadata_list) > 0) {
+        sample_info <- as.data.frame(metadata_list, stringsAsFactors = FALSE)
+        
+        # Set row names to geo_accession or sample names
+        if ("geo_accession" %in% colnames(sample_info)) {
+          rownames(sample_info) <- sample_info$geo_accession
+        } else if (length(sample_names) == nrow(sample_info)) {
+          rownames(sample_info) <- sample_names
+        } else {
+          rownames(sample_info) <- paste0("Sample", 1:nrow(sample_info))
+        }
+      } else {
+        # Fallback: create minimal metadata from sample names
+        cat("Warning: Could not parse metadata lines. Creating minimal metadata.\n")
+        sample_info <- data.frame(
+          geo_accession = sample_names,
+          stringsAsFactors = FALSE
+        )
+        rownames(sample_info) <- sample_names
+      }
+      
+      sample_info <<- sample_info
+      cat("Metadata extracted successfully using memory-efficient method!\n")
+      cat(paste("Extracted", ncol(sample_info), "metadata columns for", nrow(sample_info), "samples\n"))
+      
+    }, error = function(e3) {
+      cat("\nAll download methods failed.\n")
+      cat("Final error:", e3$message, "\n\n")
+      cat("SOLUTIONS:\n")
+      cat("1. Increase R memory limit (Mac/Linux):\n")
+      cat("   Before running R, increase memory limit in terminal:\n")
+      cat("   ulimit -v 50000000  # Sets virtual memory limit to ~50GB\n")
+      cat("   Then restart R/RStudio\n")
+      cat("   OR in R, try: Sys.setenv(R_MAX_VSIZE = \"50Gb\")\n")
+      cat("2. Download files manually:\n")
+      cat("   - Visit: https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE60450\n")
+      cat("   - Download 'Series Matrix File(s)'\n")
+      cat("   - Place GSE60450_series_matrix.txt.gz in working directory\n")
+      cat("   - Re-run this script\n")
+      cat("3. Use a machine with more RAM (32GB+ recommended)\n")
+      cat("4. Contact workshop organizers for pre-processed metadata file\n\n")
+      stop("GEO download failed. See solutions above.")
+    })
+  })
+})
+
+# Check if download was successful
+if (is.null(sample_info)) {
+  stop("Failed to download GEO metadata. See error messages above for solutions.")
+}
 
 # Download counts matrix
 FileURL <- paste(
