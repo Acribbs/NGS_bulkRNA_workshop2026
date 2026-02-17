@@ -109,21 +109,19 @@ library(circlize)
 
 ```{r load-data}
 # Load metadata
-metadata <- read.table("GSE60450_metadata_clean.txt",
+# Using read.delim for tab-separated files (more reliable than read.table with sep="\t")
+metadata <- read.delim("GSE60450_metadata_clean.txt",
                        header = TRUE,
-                       sep = "\t",
                        stringsAsFactors = FALSE)
 
 # Load counts
-counts <- read.table("GSE60450_counts_ensembl.txt",
+counts <- read.delim("GSE60450_counts_ensembl.txt",
                      header = TRUE,
-                     sep = "\t",
                      stringsAsFactors = FALSE)
 
 # Load gene annotations
-gene_annot <- read.table("GSE60450_gene_annotation.txt",
+gene_annot <- read.delim("GSE60450_gene_annotation.txt",
                          header = TRUE,
-                         sep = "\t",
                          stringsAsFactors = FALSE)
 
 # Check dimensions
