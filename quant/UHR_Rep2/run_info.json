@@ -1,0 +1,14 @@
+{
+	"n_targets": 328868,
+	"n_bootstraps": 100,
+	"n_processed": 162373,
+	"n_pseudoaligned": 46647,
+	"n_unique": 6747,
+	"p_pseudoaligned": 28.7,
+	"p_unique": 4.2,
+	"kallisto_version": "0.51.1",
+	"index_version": 13,
+	"k-mer length": 31,
+	"start_time": "Fri Feb 13 21:41:11 2026",
+	"call": "kallisto quant --rf-stranded -t 8 -b 100 -i kalindex/reference/Homo_sapiens.GRCh38.cdna.all.idx -o quant/UHR_Rep2 UHR_Rep2.fastq.1.gz UHR_Rep2.fastq.2.gz"
+}

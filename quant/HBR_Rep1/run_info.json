@@ -1,0 +1,14 @@
+{
+	"n_targets": 328868,
+	"n_bootstraps": 100,
+	"n_processed": 118571,
+	"n_pseudoaligned": 40213,
+	"n_unique": 5292,
+	"p_pseudoaligned": 33.9,
+	"p_unique": 4.5,
+	"kallisto_version": "0.51.1",
+	"index_version": 13,
+	"k-mer length": 31,
+	"start_time": "Fri Feb 13 21:41:10 2026",
+	"call": "kallisto quant --rf-stranded -t 8 -b 100 -i kalindex/reference/Homo_sapiens.GRCh38.cdna.all.idx -o quant/HBR_Rep1 HBR_Rep1.fastq.1.gz HBR_Rep1.fastq.2.gz"
+}
