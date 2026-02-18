@@ -47,3 +47,15 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# Generated data files (created by Data_download.R)
+airway_metadata_clean.txt
+airway_counts_ensembl.txt
+airway_gene_annotation.txt
+GSE60450_metadata_clean.txt
+GSE60450_counts_ensembl.txt
+GSE60450_gene_annotation.txt
+
+# Downloaded data files
+GSE60450_Lactation-GenewiseCounts.txt.gz
+GSE60450_series_matrix.txt.gz
