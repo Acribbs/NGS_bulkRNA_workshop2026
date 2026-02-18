@@ -1,4 +1,71 @@
+# ===============================================================
+# Package Setup
+# Checks for and installs all required packages automatically.
+# Works on Windows, macOS, and Linux.
+# ===============================================================
 
+# --- Check R version ---
+# Bioconductor 3.22 requires R >= 4.5. Older R versions will fail
+# to find packages, producing confusing "not available" errors.
+if (getRversion() < "4.4") {
+  stop(
+    "R version ", getRversion(), " detected. ",
+    "This workshop requires R >= 4.4.\n",
+    "Please update R from https://cran.r-project.org/ and try again."
+  )
+}
+
+# --- Ensure a writable library path exists ---
+# On some systems (e.g. Windows with R in Program Files), the default
+# library is not writable. Create a user library if needed.
+user_lib <- Sys.getenv("R_LIBS_USER")
+if (!dir.exists(user_lib)) {
+  dir.create(user_lib, recursive = TRUE, showWarnings = FALSE)
+}
+
+# --- Install BiocManager if missing ---
+if (!requireNamespace("BiocManager", quietly = TRUE)) {
+  install.packages("BiocManager", repos = "https://cloud.r-project.org")
+}
+
+# --- Define required packages ---
+bioc_packages <- c(
+  "airway", "org.Hs.eg.db", "AnnotationDbi",
+  "GEOquery", "org.Mm.eg.db"
+)
+cran_packages <- c("dplyr", "stringr")
+
+# --- Install missing packages ---
+is_installed <- function(pkg) requireNamespace(pkg, quietly = TRUE)
+
+missing_bioc <- bioc_packages[!vapply(bioc_packages, is_installed, logical(1))]
+if (length(missing_bioc) > 0) {
+  cat("Installing Bioconductor packages:", paste(missing_bioc, collapse = ", "), "\n")
+  BiocManager::install(missing_bioc, ask = FALSE, update = FALSE)
+}
+
+missing_cran <- cran_packages[!vapply(cran_packages, is_installed, logical(1))]
+if (length(missing_cran) > 0) {
+  cat("Installing CRAN packages:", paste(missing_cran, collapse = ", "), "\n")
+  install.packages(missing_cran, repos = "https://cloud.r-project.org")
+}
+
+# --- Verify everything installed ---
+all_packages  <- c(bioc_packages, cran_packages)
+still_missing <- all_packages[!vapply(all_packages, is_installed, logical(1))]
+if (length(still_missing) > 0) {
+  stop(
+    "Could not install: ", paste(still_missing, collapse = ", "), "\n",
+    "Possible causes:\n",
+    "  - No internet connection\n",
+    "  - Library path not writable (try running R as administrator,\n",
+    "    or set R_LIBS_USER to a writable directory)\n",
+    "  - R version incompatible with current Bioconductor release\n",
+    "Please install the packages above manually and re-run this script."
+  )
+}
+
+cat("All required packages are installed.\n")
 
 # ============================================
 # Airway Dataset Download and Preparation
